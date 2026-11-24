@@ -13,7 +13,7 @@ class IntegrationEventFactoryTests {
     void followingEventKeepsTheOrderAndChainsToThePreviousEvent() {
         IntegrationEventDto paymentRequested = this.factory.create("PAYMENT_REQUESTED", "42", "purchase-1", "evt-0", Map.of());
 
-        IntegrationEventDto paymentApproved = this.factory.createFollowing("PAYMENT_APPROVED", paymentRequested, Map.of("paymentId", "p-1"));
+        IntegrationEventDto paymentApproved = this.factory.create("PAYMENT_APPROVED", paymentRequested, Map.of("paymentId", "p-1"));
 
         assertThat(paymentApproved.eventId()).isNotBlank().isNotEqualTo(paymentRequested.eventId());
         assertThat(paymentApproved.eventType()).isEqualTo("PAYMENT_APPROVED");
@@ -23,6 +23,25 @@ class IntegrationEventFactoryTests {
         assertThat(paymentApproved.producer()).isEqualTo("payment-service");
         assertThat(paymentApproved.eventVersion()).isEqualTo(1);
         assertThat(paymentApproved.payload().get("paymentId").asText()).isEqualTo("p-1");
+    }
+
+    @Test
+    void firstEventWithoutPayloadHasNoPreviousEventAndAnEmptyPayload() {
+        IntegrationEventDto orderCreated = this.factory.create("ORDER_CREATED", "7", "purchase-7");
+
+        assertThat(orderCreated.previousEventId()).isNull();
+        assertThat(orderCreated.payload().isEmpty()).isTrue();
+    }
+
+    @Test
+    void followingEventWithoutPayloadKeepsTheChainAndHasAnEmptyPayload() {
+        IntegrationEventDto releaseStock = this.factory.create("RELEASE_STOCK", "7", "purchase-7", "evt-0", Map.of());
+
+        IntegrationEventDto stockReleased = this.factory.create("STOCK_RELEASED", releaseStock);
+
+        assertThat(stockReleased.correlationId()).isEqualTo("purchase-7");
+        assertThat(stockReleased.previousEventId()).isEqualTo(releaseStock.eventId());
+        assertThat(stockReleased.payload().isEmpty()).isTrue();
     }
 
     @Test
