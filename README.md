@@ -15,6 +15,8 @@ Librería con todo lo técnico de mensajería que usan order, payment e inventor
 
 `Z4KafkaAutoConfiguration` registra todo automáticamente al agregar la dependencia.
 
+El formato del mensaje, sus campos y el catálogo de eventos: [infra/docs/21-integration-event.md](../../../infra/docs/21-integration-event.md).
+
 ## Las tablas son del servicio
 
 `outbox_events` e `inbox_events` viven en la base de datos de cada servicio y las crea su migración Flyway. La librería solo trae el código (con `JdbcTemplate`), que usa la conexión y la transacción del servicio. Así el cambio de negocio, el evento del outbox y el registro del inbox se guardan juntos o no se guarda ninguno.
@@ -64,9 +66,19 @@ inboxEventService.register(event, "payment-processing-requests-topic");
 
 ## Instalar en local
 
+Las librerías se compilan con Java 21. Si tu terminal usa otra versión (revisa con `java -version`), cámbiala primero:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+```
+
+Después instala:
+
 ```bash
 ./mvnw install
 ```
+
+Si te olvidas del `export`, Maven falla con `class file version 65.0 ... only recognizes class file versions up to 61.0`: 65 es Java 21 y 61 es Java 17.
 
 ## Usar en un servicio
 
